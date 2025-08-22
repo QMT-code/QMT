@@ -8,6 +8,16 @@ var debugPanel = document.createElement('div');
 debugPanel.id = 'qmt-debug';
 debugPanel.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.8);color:white;padding:10px;font-family:monospace;font-size:12px;z-index:9999;width:300px;max-width:300px;word-wrap:break-word;';
 
+// Read the current mainSequence from embedded data if it exists
+// This ensures we get the accumulated data from previous loop iterations
+var currentMainSequence = "${e://Field/mainSequence}";
+if (currentMainSequence && typeof mainSequence !== 'undefined') {
+    // If mainSequence exists but is empty, populate it from embedded data
+    if (mainSequence.length === 0 && currentMainSequence) {
+        mainSequence = currentMainSequence.split(",").filter(function(item) { return item; });
+    }
+}
+
 // Check for QMT functions
 var expectedFunctions = [];
 Object.keys(regionConfig).forEach(function(regionId) {
@@ -64,13 +74,26 @@ document.body.appendChild(debugPanel);
 
 // Update dynamic content periodically
 setInterval(function() {
-    document.getElementById('qmt-active').textContent = Object.keys(regionStartTimes).length;
-    document.getElementById('qmt-shows').textContent = mainSequence.length;
-    
-    // Show first 250 chars of mainSequence
-    var sequenceHead = mainSequence.join(",");
-    if (sequenceHead.length > 250) {
-        sequenceHead = sequenceHead.substring(0, 250) + "...";
+    // Check if variables exist in current context
+    if (typeof regionStartTimes !== 'undefined') {
+        document.getElementById('qmt-active').textContent = Object.keys(regionStartTimes).length;
     }
-    document.getElementById('qmt-sequence').textContent = sequenceHead || "empty";
+    
+    if (typeof mainSequence !== 'undefined') {
+        document.getElementById('qmt-shows').textContent = mainSequence.length;
+        
+        // Show first 250 chars of mainSequence
+        var sequenceHead = mainSequence.join(",");
+        if (sequenceHead.length > 250) {
+            sequenceHead = sequenceHead.substring(0, 250) + "...";
+        }
+        document.getElementById('qmt-sequence').textContent = sequenceHead || "empty";
+    } else {
+        // If mainSequence doesn't exist in current context, show embedded data
+        var embeddedSequence = "${e://Field/mainSequence}" || "empty";
+        if (embeddedSequence.length > 250) {
+            embeddedSequence = embeddedSequence.substring(0, 250) + "...";
+        }
+        document.getElementById('qmt-sequence').textContent = embeddedSequence;
+    }
 }, 100);
