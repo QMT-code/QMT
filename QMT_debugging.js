@@ -3,20 +3,10 @@
 // To integrate this debugging into QMT, you can do the following:
   // (1) You can paste this code directly into your .addOnReady function
   // (2) Preferred - the provided QMT code will automatically call and use this debugging code if there is an embedded data variable called "DEBUG_MODE" set to a value of "1"
-  
+
 var debugPanel = document.createElement('div');
 debugPanel.id = 'qmt-debug';
 debugPanel.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.8);color:white;padding:10px;font-family:monospace;font-size:12px;z-index:9999;width:300px;max-width:300px;word-wrap:break-word;';
-
-// Read the current mainSequence from embedded data if it exists
-// This ensures we get the accumulated data from previous loop iterations
-var currentMainSequence = "${e://Field/mainSequence}";
-if (currentMainSequence && typeof mainSequence !== 'undefined') {
-    // If mainSequence exists but is empty, populate it from embedded data
-    if (mainSequence.length === 0 && currentMainSequence) {
-        mainSequence = currentMainSequence.split(",").filter(function(item) { return item; });
-    }
-}
 
 // Check for QMT functions
 var expectedFunctions = [];
@@ -79,21 +69,29 @@ setInterval(function() {
         document.getElementById('qmt-active').textContent = Object.keys(regionStartTimes).length;
     }
     
-    if (typeof mainSequence !== 'undefined') {
+    // For mainSequence, check BOTH the JS variable and embedded data
+    var sequenceToShow = "empty";
+    
+    // First try the JavaScript variable
+    if (typeof mainSequence !== 'undefined' && mainSequence.length > 0) {
+        sequenceToShow = mainSequence.join(",");
         document.getElementById('qmt-shows').textContent = mainSequence.length;
-        
-        // Show first 250 chars of mainSequence
-        var sequenceHead = mainSequence.join(",");
-        if (sequenceHead.length > 250) {
-            sequenceHead = sequenceHead.substring(0, 250) + "...";
+    } 
+    // If JS variable is empty/undefined, try embedded data
+    else {
+        var embeddedSequence = "${e://Field/mainSequence}";
+        if (embeddedSequence && embeddedSequence !== "" && embeddedSequence !== "${e://Field/mainSequence}") {
+            sequenceToShow = embeddedSequence;
+            // Count events from embedded data
+            var eventCount = embeddedSequence.split(",").filter(function(item) { return item; }).length;
+            document.getElementById('qmt-shows').textContent = eventCount;
         }
-        document.getElementById('qmt-sequence').textContent = sequenceHead || "empty";
-    } else {
-        // If mainSequence doesn't exist in current context, show embedded data
-        var embeddedSequence = "${e://Field/mainSequence}" || "empty";
-        if (embeddedSequence.length > 250) {
-            embeddedSequence = embeddedSequence.substring(0, 250) + "...";
-        }
-        document.getElementById('qmt-sequence').textContent = embeddedSequence;
     }
+    
+    // Truncate if needed
+    if (sequenceToShow.length > 250) {
+        sequenceToShow = sequenceToShow.substring(0, 250) + "...";
+    }
+    
+    document.getElementById('qmt-sequence').textContent = sequenceToShow;
 }, 100);
