@@ -17,7 +17,6 @@ debugPanel.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0
 document.body.appendChild(debugPanel);
 
 // Check for QMT functions
-// Check for QMT functions
 var expectedFunctions = [];
 Object.keys(regionConfig).forEach(function(regionId) {
     var config = regionConfig[regionId];
@@ -69,6 +68,7 @@ Object.keys(regionConfig).forEach(function(regionId) {
 });
 
 // Build the debug panel HTML with all diagnostic info
+// Notice, we are using the single quote instead of double quotes to wrap, as discussed
 debugPanel.innerHTML = [
     '<strong>QMT Debug Panel</strong>',
     '<div style="margin-top:5px;">Load time: ' + new Date().toLocaleTimeString() + '</div>',
